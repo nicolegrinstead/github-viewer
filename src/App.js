@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import GitHub from 'github-api';
-import logo from './octocat.jpg';
+import logo from './octocat.gif';
 import './App.css';
 
 class App extends Component {
