@@ -1,24 +1,58 @@
-.App {
+.AppLogo {
+  height: 160px;
+}
+
+.AppHeader {
   text-align: center;
-}
-
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
-}
-
-.App-header {
-  background-color: #222;
-  height: 150px;
+  background-color: #194995;
+  height: 220px;
   padding: 20px;
   color: white;
 }
 
-.App-intro {
-  font-size: large;
+.SearchBox {
+  margin-top: 20px;
+  text-align: center;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.SearchField { 
+  margin-right: 7px;
+}
+
+.Input { 
+  border-radius: 3px;
+  padding: 3px;
+  border: solid 1px lightgray;
+  font-size: 13px;
+}
+
+.Label { 
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.Results{ 
+  margin-left: 35%;
+  margin-bottom: 50px;
+}
+
+.List {
+  list-style-type: none;
+  width: 525px;
+  padding: 0;
+}
+
+.CommitListItem { 
+  background-color: #1949951a;
+  border-radius: 15px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.CommitDetails { 
+  margin: 7px 0 5px 7px;
+}
+
+.RepoListItem { 
+  margin-bottom: 7px;
 }

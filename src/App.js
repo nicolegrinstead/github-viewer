@@ -1,16 +1,15 @@
 import React, { Component } from 'react';
 import GitHub from 'github-api';
-// import ReactTooltip from 'react-tooltip';
-import logo from './logo.svg';
+import logo from './octocat.jpg';
 import './App.css';
 
 class App extends Component {
 
-  constructor(props) {
+  constructor(props) { 
     super(props);
     this.handleOrganizationChange = this.handleOrganizationChange.bind(this);
     this.searchOrganization = this.searchOrganization.bind(this);
-    this.state = {repos: [], commits: [], currentRepo:'', organization: ''};
+    this.state = {repos: [], commits: [], currentRepo: '', orgErrorMessage: '', organization: ''};
   }
 
   handleOrganizationChange(e) {
@@ -18,94 +17,85 @@ class App extends Component {
   }
 
   searchOrganization(e) {
+    this.setState({repos: [], commits: [], orgErrorMessage: ''});
     e.preventDefault();
     const gh = new GitHub();
     var organization = gh.getOrganization(this.state.organization);
-    //TODO: catch error and display message if no orgs found
     organization.getRepos().then((result) => {
-      var repos = result.data;
-      for(var i=0; i<repos.length; i++){
-        this.addRepoToState(i, repos[i]);
-      }
+      var repos = result.data.map((repo, i)=>{repo.id = i; return repo});
+      repos.sort(function (a, b) {
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      });
+      this.setState({repos: repos});
+    }).catch(() => {
+      this.setState({orgErrorMessage: "We couldn't find that organizatoin ¯\\_(ツ)_/¯ "}) 
     });
   }
 
-  addRepoToState(id, repo){ 
-    repo.id = id;
-    this.setState((prevState) => ({
-      repos: prevState.repos.concat(repo),
-      organization: prevState.organization
-    }));      
-  }
-
-  addCommitToState(id, commit, currentRepo){ 
-    commit.id = id;
-    this.setState((prevState) => ({
-      commits: prevState.commits.concat(commit), 
-      currentRepo: currentRepo,
-      organization: prevState.organization
-    }));      
-  }
-
   viewCommits(repoInfo){ 
-    this.setState({repos:[]});
+    this.setState({repos: [], currentRepo: repoInfo.owner.login+"/"+repoInfo.name});
     const gh = new GitHub();
-    //TODO: limit commits by recent (Last month?) and only last 10 or 20?
     var repo = gh.getRepo(repoInfo.owner.login, repoInfo.name);
     repo.listCommits().then(
       (result) => {
-        var commits = result.data;
-        for(var i=0; i<commits.length; i++){
-          this.addCommitToState(i, commits[i], repoInfo.name);
-        }
+        var commits = result.data.map((commit, i)=>{commit.id = i; return commit});
+        this.setState({commits: commits});
       }
     );
   }
 
   render() {
-    let repoList = null;
     let commitList = this.state.commits.length > 0 ? <CommitList repo={this.state.currentRepo} commits={this.state.commits} /> : null;
-    if (this.state.repos.length !== 0) {
-      repoList = <ul>
-                  {this.state.repos.map(repo => (
-                    <li key={repo.id}>
-                      <a onClick={()=>this.viewCommits(repo)}> {repo.name} </a>
-                    </li>
-                  ))}
-                </ul>;
-    }
+    let repoList = this.state.repos.length > 0 ? <RepoList repos={this.state.repos} onClick={this.viewCommits.bind(this)} org={this.state.organization}/> : null;
 
     return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React Nicole</h2>
+      <div>
+        <div className="AppHeader">
+          <img src={logo} className="AppLogo" alt="octocat" />
+          <h2>GitHub Organization Search</h2>
         </div>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-        <h3>Search for an Organization:</h3>
-        <form onSubmit={this.searchOrganization}>
-          <input onChange={this.handleOrganizationChange} value={this.state.organization} />
-          <button>Search</button>
-        </form>
-        {repoList}
-        {commitList}
+        <div className="SearchBox">
+          <form onSubmit={this.searchOrganization}>
+            <label className="SearchField Label">Find Repos in an Organization:</label>
+            <input className="SearchField Input" onChange={this.handleOrganizationChange} value={this.state.organization} />
+            <button className="SearchField Input">Search</button>
+          </form>
+        </div>
+        <div className="Results">
+          <p>{this.state.orgErrorMessage}</p>
+          {repoList}
+          {commitList}
+        </div>
       </div>
     );
-
   }
+}
+
+function RepoList(props){ 
+  const repos = props.repos;
+  return (
+    <div>
+      <h4>Repos from {props.org}: </h4>
+      <ul className="List">
+        {repos.map(repo => (
+          <li className="RepoListItem" key={repo.id}>
+            <a href={"/commit/#"+repo.name} title={"View Commits for "+repo.name} onClick={(e) => {e.preventDefault(); props.onClick(repo);}}> {repo.name} </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function CommitList(props){ 
   const commits = props.commits;
   return (
     <div>
-      <h4>Recent Commits for {props.repo}</h4>
-      <ul>
+      <h4>Recent Commits for {props.repo}:</h4>
+      <ul className="List">
         {commits.map(commit => (
-          <li key={commit.id}>
-            <p>Commit message: {commit.commit.message}</p>
+          <li className="CommitListItem" key={commit.id}>
+            <p className="CommitDetails"><b>Commit message:</b> {commit.commit.message}</p>
             <Author commit={commit}/>
             <Committer commit={commit}/>
           </li>
@@ -118,7 +108,7 @@ function CommitList(props){
 function Author(props){ 
   const commit = props.commit.commit;
   if (commit.author){ 
-    return <p>Authored by: {commit.author.name} On: {commit.author.date}</p>;
+    return <p className="CommitDetails"><b>Authored by:</b> {commit.author.name} On: {commit.author.date}</p>;
   } else { 
     return null;
   }
@@ -127,7 +117,7 @@ function Author(props){
 function Committer(props){ 
   const commit = props.commit.commit;
   if (commit.committer){ 
-    return <p>Commited by: {commit.committer.name} On: {commit.committer.date}</p>;
+    return <p className="CommitDetails"><b>Commited by:</b> {commit.committer.name} On: {commit.committer.date}</p>;
   } else { 
     return null;
   }
