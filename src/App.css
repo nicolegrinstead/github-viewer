@@ -43,7 +43,7 @@
 }
 
 .CommitListItem { 
-  background-color: #1949951a;
+  background-color: rgba(25, 73, 149, 0.15);
   border-radius: 15px;
   padding: 10px;
   margin-bottom: 10px;
